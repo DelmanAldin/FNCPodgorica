@@ -1,0 +1,767 @@
+<!DOCTYPE html>
+<html lang="bs">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<meta name="mobile-web-app-capable" content="yes"/>
+<meta name="apple-mobile-web-app-capable" content="yes"/>
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
+<meta name="theme-color" content="#c2410c"/>
+<title>FNC Podgorica</title>
+<link rel="manifest" href="manifest.json"/>
+<style>
+:root{
+  --bg:#080808;--card:#111;--card2:#1a1a1a;--border:#252525;
+  --accent:#f97316;--accent2:#fb923c;--text:#f1f1f1;--muted:#666;
+  --red:#ef4444;--green:#22c55e;--yellow:#eab308;
+}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+body{background:var(--bg);color:var(--text);font-family:system-ui,-apple-system,sans-serif;min-height:100vh;padding-bottom:3rem}
+
+/* HEADER */
+header{
+  background:linear-gradient(135deg,#431407,#7c2d12,#c2410c);
+  padding:1rem;text-align:center;position:sticky;top:0;z-index:50;
+  border-bottom:1px solid #9a3412;box-shadow:0 4px 20px rgba(249,115,22,.15);
+}
+header h1{font-size:1.45rem;font-weight:800;letter-spacing:.8px}
+header p{color:#fed7aa;font-size:.75rem;margin-top:.2rem}
+.mgr-chip{
+  position:absolute;top:50%;left:1rem;transform:translateY(-50%);
+  background:rgba(249,115,22,.15);border:1px solid var(--accent);
+  color:var(--accent2);padding:.3rem .65rem;border-radius:2rem;font-size:.7rem;
+  display:none;
+}
+.mgr-chip.show{display:block}
+.btn-mgr{
+  position:absolute;top:50%;right:1rem;transform:translateY(-50%);
+  background:rgba(0,0,0,.35);border:1px solid rgba(255,255,255,.15);
+  color:#fed7aa;padding:.4rem .75rem;border-radius:.4rem;font-size:.75rem;cursor:pointer;
+}
+.btn-mgr:hover{background:rgba(249,115,22,.25)}
+
+/* NAV */
+nav{display:flex;background:#0d0d0d;border-bottom:1px solid var(--border)}
+nav button{
+  flex:1;padding:.72rem .5rem;background:none;border:none;
+  color:var(--muted);font-size:.82rem;cursor:pointer;
+  border-bottom:2px solid transparent;white-space:nowrap;transition:.15s;
+}
+nav button.active{color:var(--accent2);border-color:var(--accent)}
+
+/* TABS */
+.tab{display:none;padding:1rem}
+.tab.active{display:block}
+
+/* SECTION LABEL */
+.slabel{
+  font-size:.7rem;font-weight:700;text-transform:uppercase;
+  letter-spacing:.8px;color:var(--muted);
+  display:flex;align-items:center;gap:.6rem;margin-bottom:.9rem;
+}
+.slabel::after{content:'';flex:1;height:1px;background:var(--border)}
+
+/* ── TICKET CARDS ── */
+.ticket-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:.85rem}
+.ticket-card{background:var(--card);border:1px solid var(--border);border-radius:.875rem;overflow:hidden}
+.ticket-hdr{
+  background:linear-gradient(90deg,#431407,#7c2d12);
+  padding:.7rem 1rem;display:flex;align-items:center;justify-content:space-between;
+}
+.ticket-hdr .tname{font-weight:700;font-size:.95rem}
+.score-pill{
+  background:var(--accent);color:#fff;font-size:.7rem;
+  font-weight:700;padding:.18rem .55rem;border-radius:1rem;
+}
+.score-pill.zero{background:#2a2a2a;color:var(--muted)}
+.empty-msg{padding:1.5rem;text-align:center;color:var(--muted);font-size:.82rem}
+
+/* ticket fight row */
+.tfrow{
+  display:grid;grid-template-columns:1fr 24px 1fr;
+  align-items:center;padding:.4rem .7rem;
+  border-bottom:1px solid var(--border);gap:.25rem;
+}
+.tfrow:last-child{border-bottom:none}
+.tf{display:flex;flex-direction:column;align-items:center;gap:.2rem;text-align:center}
+.tf img{
+  width:44px;height:50px;object-fit:cover;object-position:top;
+  border-radius:.35rem;border:2px solid var(--border);background:#181818;
+}
+.tf img.hi{border-color:var(--accent);box-shadow:0 0 6px rgba(249,115,22,.35)}
+.tf img.lo{opacity:.2;filter:grayscale(1)}
+.tf .fn{font-size:.66rem;font-weight:600;max-width:78px;line-height:1.2}
+.tf .fn.won{color:var(--accent2)}
+.tf .fn.lost{color:var(--muted)}
+.tf .fn.dim{color:var(--muted);opacity:.45}
+.mpill{
+  font-size:.57rem;padding:.1rem .32rem;border-radius:.25rem;
+  font-weight:700;letter-spacing:.2px;margin-top:.05rem;
+}
+.mpill.ko{background:#7f1d1d;color:#fca5a5}
+.mpill.sub{background:#4c1d95;color:#c4b5fd}
+.mpill.bod{background:#1e3a5f;color:#93c5fd}
+.mpill.ost{background:#1f2937;color:#9ca3af}
+.tfvs{text-align:center;font-size:.58rem;color:var(--muted)}
+.tfnum{font-size:.55rem;color:#333;margin-bottom:.1rem}
+
+/* ── PARTICIPANT MANAGEMENT CARDS ── */
+.p-cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:.65rem;margin-bottom:1.25rem}
+.p-card{
+  background:var(--card);border:1px solid var(--border);
+  border-radius:.75rem;padding:.85rem 1rem;
+  display:flex;align-items:center;justify-content:space-between;gap:.75rem;
+}
+.p-card.inactive{opacity:.45}
+.p-card-left{display:flex;align-items:center;gap:.75rem}
+.p-avatar{
+  width:38px;height:38px;border-radius:50%;
+  background:linear-gradient(135deg,#431407,#c2410c);
+  display:flex;align-items:center;justify-content:center;
+  font-weight:800;font-size:.9rem;color:#fed7aa;flex-shrink:0;
+}
+.p-avatar.off{background:#222;color:var(--muted)}
+.p-info .pname{font-weight:700;font-size:.9rem}
+.p-info .pstatus{font-size:.7rem;margin-top:.1rem}
+.p-info .pstatus.on{color:var(--green)}
+.p-info .pstatus.off{color:var(--muted)}
+.p-actions{display:flex;align-items:center;gap:.4rem;flex-shrink:0}
+.btn-edit-ticket{
+  padding:.38rem .7rem;background:#431407;border:1px solid var(--accent);
+  border-radius:.4rem;color:var(--accent2);font-size:.75rem;font-weight:600;cursor:pointer;
+  white-space:nowrap;
+}
+.btn-edit-ticket:hover{background:#7c2d12}
+.btn-edit-ticket:disabled{opacity:.3;cursor:not-allowed}
+.toggle-btn{
+  width:38px;height:22px;border-radius:11px;border:none;cursor:pointer;
+  position:relative;transition:.2s;flex-shrink:0;
+}
+.toggle-btn.on{background:var(--green)}
+.toggle-btn.off{background:#333}
+.toggle-btn::after{
+  content:'';position:absolute;width:16px;height:16px;
+  background:#fff;border-radius:50%;top:3px;transition:.2s;
+}
+.toggle-btn.on::after{left:19px}
+.toggle-btn.off::after{left:3px}
+
+/* ── FIGHT RESULT CARDS ── */
+.fight-card{
+  background:var(--card);border:1px solid var(--border);
+  border-radius:.875rem;margin-bottom:.75rem;overflow:hidden;
+}
+.fight-card-hdr{
+  padding:.55rem 1rem;background:var(--card2);
+  display:flex;justify-content:space-between;align-items:center;
+  font-size:.76rem;border-bottom:1px solid var(--border);
+}
+.fight-card-hdr .fn{color:var(--muted)}
+.done-badge{background:#14291a;color:#4ade80;font-size:.68rem;padding:.2rem .55rem;border-radius:1rem;border:1px solid #166534}
+.pending-dot{color:var(--muted);font-size:.72rem}
+
+.fphotos{display:grid;grid-template-columns:1fr 36px 1fr;gap:.5rem;padding:.75rem .75rem .4rem}
+.fpicker{
+  background:var(--card2);border:2px solid var(--border);
+  border-radius:.6rem;padding:.5rem .35rem .55rem;cursor:pointer;
+  text-align:center;transition:.15s;display:flex;flex-direction:column;align-items:center;gap:.25rem;
+}
+.fpicker:hover{border-color:#3a3a3a}
+.fpicker.sel{border-color:var(--accent);background:#431407}
+.fpicker img{width:100%;max-width:88px;height:100px;object-fit:cover;object-position:top;border-radius:.4rem;background:#1a1a1a}
+.fpicker .pn{font-size:.76rem;font-weight:700;line-height:1.2;margin-top:.1rem}
+.fvs{display:flex;align-items:center;justify-content:center}
+.vs-circle{
+  width:30px;height:30px;border-radius:50%;
+  background:var(--card2);border:1px solid var(--border);
+  display:flex;align-items:center;justify-content:center;
+  font-size:.7rem;font-weight:800;color:var(--muted);
+}
+.method-row{display:flex;gap:.35rem;padding:.35rem .75rem .75rem;flex-wrap:wrap}
+.mbtn{
+  flex:1;min-width:64px;padding:.4rem;
+  background:var(--card2);border:1px solid var(--border);
+  border-radius:.4rem;color:var(--text);font-size:.73rem;
+  cursor:pointer;text-align:center;transition:.15s;
+}
+.mbtn:hover{border-color:#3a3a3a}
+.mbtn.sel-ko{border-color:#ef4444;background:#450a0a;color:#fca5a5;font-weight:700}
+.mbtn.sel-sub{border-color:#8b5cf6;background:#2e1065;color:#c4b5fd;font-weight:700}
+.mbtn.sel-bod{border-color:#3b82f6;background:#172554;color:#93c5fd;font-weight:700}
+.mbtn.sel-ost{border-color:#6b7280;background:#111827;color:#9ca3af;font-weight:700}
+.save-btn{
+  width:calc(100% - 1.5rem);margin:0 .75rem .75rem;
+  padding:.5rem;background:var(--accent);border:none;
+  border-radius:.45rem;color:#fff;font-weight:800;cursor:pointer;font-size:.88rem;
+}
+.save-btn:hover{background:var(--accent2)}
+.del-btn{
+  display:block;text-align:center;background:none;border:none;
+  color:var(--red);font-size:.7rem;cursor:pointer;padding:.1rem .4rem .65rem;width:100%;
+}
+
+/* ── TICKET EDITOR OVERLAY ── */
+.editor-overlay{
+  display:none;position:fixed;inset:0;z-index:200;
+  background:var(--bg);overflow-y:auto;
+}
+.editor-overlay.open{display:block}
+.editor-sticky-hdr{
+  position:sticky;top:0;z-index:10;
+  background:linear-gradient(135deg,#431407,#7c2d12);
+  padding:.9rem 1rem;display:flex;align-items:center;justify-content:space-between;
+  border-bottom:1px solid #9a3412;
+}
+.editor-sticky-hdr h2{font-size:1rem;font-weight:700}
+.editor-sticky-hdr p{font-size:.72rem;color:#fed7aa;margin-top:.1rem}
+.editor-close{
+  background:rgba(0,0,0,.35);border:1px solid rgba(255,255,255,.2);
+  color:#fff;width:34px;height:34px;border-radius:50%;
+  font-size:1.1rem;cursor:pointer;display:flex;align-items:center;justify-content:center;
+  flex-shrink:0;
+}
+.editor-body{padding:1rem}
+
+.ef-card{
+  background:var(--card);border:1px solid var(--border);
+  border-radius:.75rem;margin-bottom:.65rem;overflow:hidden;
+}
+.ef-hdr{
+  padding:.45rem .85rem;background:var(--card2);font-size:.72rem;
+  color:var(--muted);border-bottom:1px solid var(--border);
+  display:flex;justify-content:space-between;align-items:center;
+}
+.saved-dot{width:7px;height:7px;border-radius:50%;background:var(--green);display:inline-block}
+.ef-photos{display:grid;grid-template-columns:1fr 32px 1fr;gap:.4rem;padding:.6rem .6rem .35rem}
+.ef-pick{
+  background:var(--card2);border:2px solid var(--border);
+  border-radius:.5rem;padding:.4rem .3rem .45rem;cursor:pointer;
+  text-align:center;transition:.15s;display:flex;flex-direction:column;align-items:center;gap:.2rem;
+}
+.ef-pick:hover{border-color:#3a3a3a}
+.ef-pick.sel{border-color:var(--accent);background:#431407}
+.ef-pick img{width:100%;max-width:68px;height:78px;object-fit:cover;object-position:top;border-radius:.35rem;background:#181818}
+.ef-pick .en{font-size:.68rem;font-weight:600;line-height:1.2;margin-top:.1rem}
+.ef-vs{display:flex;align-items:center;justify-content:center;font-size:.7rem;color:var(--muted);font-weight:800}
+.ef-methods{display:flex;gap:.3rem;padding:.3rem .6rem .6rem;flex-wrap:wrap}
+.emb{
+  flex:1;min-width:58px;padding:.35rem;
+  background:var(--card2);border:1px solid var(--border);
+  border-radius:.35rem;color:var(--text);font-size:.68rem;cursor:pointer;text-align:center;transition:.15s;
+}
+.emb:hover{border-color:#3a3a3a}
+.emb.sel-ko{border-color:#ef4444;background:#450a0a;color:#fca5a5;font-weight:700}
+.emb.sel-sub{border-color:#8b5cf6;background:#2e1065;color:#c4b5fd;font-weight:700}
+.emb.sel-bod{border-color:#3b82f6;background:#172554;color:#93c5fd;font-weight:700}
+.emb.sel-ost{border-color:#6b7280;background:#111827;color:#9ca3af;font-weight:700}
+.editor-done-btn{
+  width:100%;padding:.65rem;margin-top:.5rem;
+  background:var(--accent);border:none;border-radius:.5rem;
+  color:#fff;font-weight:800;font-size:.95rem;cursor:pointer;
+}
+.editor-done-btn:hover{background:var(--accent2)}
+
+/* ── RESULTS TAB ── */
+.podium{display:flex;justify-content:center;align-items:flex-end;gap:.5rem;margin-bottom:1.5rem}
+.pod{background:var(--card);border:1px solid var(--border);border-radius:.75rem;padding:.75rem .5rem;text-align:center;flex:1;max-width:115px}
+.pod.p1{border-color:var(--yellow);background:#1a1600;order:2;transform:translateY(-8px)}
+.pod.p2{border-color:#777;background:#141414;order:1}
+.pod.p3{border-color:#b45309;background:#150a00;order:3}
+.pod .medal{font-size:1.3rem}
+.pod .pname{font-size:.8rem;font-weight:700;margin:.2rem 0 .1rem}
+.pod .pscore{font-size:1.5rem;font-weight:800}
+.pod.p1 .pscore{color:var(--yellow)}
+.pod.p2 .pscore{color:#aaa}
+.pod.p3 .pscore{color:#b45309}
+
+.stbl{width:100%;border-collapse:collapse;font-size:.82rem;margin-bottom:1.5rem}
+.stbl th{padding:.45rem .7rem;background:var(--card2);text-align:left;color:var(--muted);font-size:.68rem;text-transform:uppercase;letter-spacing:.4px}
+.stbl td{padding:.45rem .7rem;border-bottom:1px solid var(--border)}
+.stbl tr:last-child td{border-bottom:none}
+.r1{color:var(--yellow);font-weight:700}.r2{color:#e5e7eb;font-weight:600}.r3{color:#b45309}
+.tick{color:var(--green)}.cross{color:var(--red)}
+
+.bscroll{overflow-x:auto}
+.btbl{border-collapse:collapse;font-size:.76rem;min-width:380px;width:100%}
+.btbl th{padding:.4rem .55rem;background:var(--card2);text-align:left;color:var(--muted);font-size:.65rem;text-transform:uppercase;white-space:nowrap}
+.btbl td{padding:.4rem .55rem;border-bottom:1px solid var(--border);vertical-align:top}
+.btbl tr:last-child td{border-bottom:none}
+
+/* MODAL */
+.modal-overlay{
+  display:none;position:fixed;inset:0;background:rgba(0,0,0,.85);
+  z-index:300;align-items:center;justify-content:center;backdrop-filter:blur(4px);
+}
+.modal-overlay.open{display:flex}
+.modal{
+  background:var(--card);border:1px solid var(--border);border-radius:1rem;
+  padding:1.5rem;width:90%;max-width:320px;
+}
+.modal h3{margin-bottom:.2rem;font-size:1rem;font-weight:700}
+.modal p{color:var(--muted);font-size:.78rem;margin-bottom:1rem}
+.modal input{
+  width:100%;padding:.6rem .85rem;background:var(--bg);border:1px solid var(--border);
+  border-radius:.5rem;color:var(--text);font-size:1.1rem;letter-spacing:.15rem;margin-bottom:.75rem;
+}
+.modal input:focus{outline:none;border-color:var(--accent)}
+.modal-btns{display:flex;gap:.5rem}
+.modal-btns button{flex:1;padding:.5rem;border-radius:.5rem;border:none;cursor:pointer;font-size:.9rem;font-weight:700}
+.btn-ok{background:var(--accent);color:#fff}
+.btn-ok:hover{background:var(--accent2)}
+.btn-no{background:var(--card2);color:var(--text)}
+.err{color:var(--red);font-size:.75rem;margin-bottom:.5rem;display:none}
+
+/* TOAST */
+.toast{
+  position:fixed;bottom:1.5rem;left:50%;transform:translateX(-50%);
+  background:#431407;color:#fed7aa;border:1px solid var(--accent);
+  padding:.55rem 1.2rem;border-radius:2rem;font-size:.8rem;
+  z-index:400;opacity:0;transition:opacity .25s;pointer-events:none;white-space:nowrap;
+}
+.toast.show{opacity:1}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="mgr-chip" id="mgr-chip">⚙ MGR</div>
+  <h1>🥊 FNC PODGORICA</h1>
+  <p id="hdr-sub">11 borbi · Podgorica 2026</p>
+  <button class="btn-mgr" onclick="openMgrModal()">⚙ Mgr</button>
+</header>
+
+<nav>
+  <button class="active" onclick="showTab('tickets',this)">🎟 Listići</button>
+  <button onclick="showTab('live',this)">⚙ Upravljanje</button>
+  <button onclick="showTab('results',this)">🏆 Rezultati</button>
+</nav>
+
+<div id="tab-tickets" class="tab active"></div>
+<div id="tab-live" class="tab"></div>
+<div id="tab-results" class="tab"></div>
+
+<!-- Ticket editor overlay -->
+<div class="editor-overlay" id="editor-overlay">
+  <div class="editor-sticky-hdr">
+    <div>
+      <h2 id="editor-name">Uredi listić</h2>
+      <p id="editor-sub">Odaberi pobjednika i metod za svaku borbu</p>
+    </div>
+    <button class="editor-close" onclick="closeEditor()">✕</button>
+  </div>
+  <div class="editor-body" id="editor-body"></div>
+</div>
+
+<!-- Pin modal -->
+<div class="modal-overlay" id="mgr-modal">
+  <div class="modal">
+    <h3>🔐 Manager pristup</h3>
+    <p>Unesite manager šifru</p>
+    <div class="err" id="pin-err">Pogrešna šifra!</div>
+    <input type="password" id="pin-input" placeholder="••••••" onkeydown="if(event.key==='Enter')checkPin()"/>
+    <div class="modal-btns">
+      <button class="btn-ok" onclick="checkPin()">Potvrdi</button>
+      <button class="btn-no" onclick="closeMgrModal()">Odustani</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script type="module">
+import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js';
+import { getDatabase, ref, set, remove, onValue } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js';
+
+const FIREBASE_CONFIG = {
+  apiKey: "AIzaSyDXR9bZD9NqiF5234sDIuYVCjWM7mDbcyE",
+  authDomain: "fnc33-1669a.firebaseapp.com",
+  databaseURL: "https://fnc33-1669a-default-rtdb.europe-west1.firebasedatabase.app",
+  projectId: "fnc33-1669a",
+  storageBucket: "fnc33-1669a.firebasestorage.app",
+  messagingSenderId: "978538777217",
+  appId: "1:978538777217:web:cd37904ec4e10fa06adb80"
+};
+const DB = 'podgorica';
+const PIN = '100499';
+
+const app = initializeApp(FIREBASE_CONFIG);
+const db = getDatabase(app);
+
+// ── DATA ─────────────────────────────────────────────────────
+const FIGHTS = [
+  {id:'f1',  num:1,  f1:'Kijamet',      f2:'Basbudak',     img1:'kijamet.png',       img2:'basbudak.png'},
+  {id:'f2',  num:2,  f1:'Negru',        f2:'Petrenyi',     img1:'negru.png',          img2:'petrenyi.png'},
+  {id:'f3',  num:3,  f1:'Politylo',     f2:'Sonmez',       img1:'politylo.png',       img2:'sonmez.png'},
+  {id:'f4',  num:4,  f1:'Bubanja',      f2:'Dobrijević',   img1:'bubanja.png',        img2:'dobrijevic.png'},
+  {id:'f5',  num:5,  f1:'Sufiev',       f2:'Niedzielski',  img1:'sufiev.png',         img2:'niedzielski.png'},
+  {id:'f6',  num:6,  f1:'Dragojević',   f2:'Abdulkadirov', img1:'dragojevic.png',     img2:'abdulkadirov.png'},
+  {id:'f7',  num:7,  f1:'T. Sičaja',    f2:'Stanković',    img1:'tomislavsicaja.png', img2:'stankovic.png'},
+  {id:'f8',  num:8,  f1:'Zlatičanin',   f2:'Lupu',         img1:'zlaticanin.png',     img2:'lupu.png'},
+  {id:'f9',  num:9,  f1:'I. Sičaja',    f2:'Villalba',     img1:'ivansicaja.png',     img2:'villalba.png'},
+  {id:'f10', num:10, f1:'Opačić',       f2:'Soldatkin',    img1:'opacic.png',         img2:'soldatkin.png'},
+  {id:'f11', num:11, f1:'Zdravković',   f2:'Vargas',       img1:'zdravkovic.png',     img2:'vargas.png'},
+];
+const ALL_P = ['Pule','Dino','Keni','Aladin','Brano','Delman'];
+const METHODS = ['KO/TKO','Submission','Bodovi','Ostalo'];
+
+// ── STATE ────────────────────────────────────────────────────
+let tickets  = {};   // {name: {fid: {winnerIdx, method}}}
+let results  = {};   // {fid: {winnerIdx, method}}
+let active   = {};   // {name: true/false}  — from Firebase
+let resSel   = {};   // local result selection draft
+let editorFor = null; // participant being edited
+
+function isMgr(){ return sessionStorage.getItem('mgr')===PIN; }
+function activePlayers(){ return ALL_P.filter(n => active[n] !== false); }
+
+// ── FIREBASE LISTENERS ───────────────────────────────────────
+onValue(ref(db, `${DB}/tickets`),  snap => { tickets = snap.val()||{}; renderAll(); });
+onValue(ref(db, `${DB}/results`),  snap => { results = snap.val()||{}; renderAll(); });
+onValue(ref(db, `${DB}/active`),   snap => {
+  const v = snap.val();
+  // default: everyone active unless explicitly set to false
+  ALL_P.forEach(n => { active[n] = v ? (v[n] !== false) : true; });
+  renderAll();
+});
+
+// ── FIREBASE WRITES ──────────────────────────────────────────
+const fbSet = (path, val) => set(ref(db, path), val);
+const fbDel = path => remove(ref(db, path));
+
+// ── HELPERS ──────────────────────────────────────────────────
+function mc(m){ return m==='KO/TKO'?'ko':m==='Submission'?'sub':m==='Bodovi'?'bod':'ost'; }
+function msel(m){ return m==='KO/TKO'?'sel-ko':m==='Submission'?'sel-sub':m==='Bodovi'?'sel-bod':m==='Ostalo'?'sel-ost':''; }
+function fimg(src, cls=''){
+  const fb = `data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' width='70' height='80'><rect width='70' height='80' fill='%23222'/><text x='35' y='48' text-anchor='middle' fill='%23555' font-size='24'>?</text></svg>`;
+  return `<img src="${src}" class="${cls}" onerror="this.src='${fb}'" alt=""/>`;
+}
+function initial(name){ return name.charAt(0).toUpperCase(); }
+
+// ── TABS ─────────────────────────────────────────────────────
+window.showTab = function(name, btn){
+  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+  document.querySelectorAll('nav button').forEach(b=>b.classList.remove('active'));
+  document.getElementById('tab-'+name).classList.add('active');
+  if(btn) btn.classList.add('active');
+};
+
+function renderAll(){ renderTickets(); renderLive(); renderResults(); if(editorFor) renderEditor(); }
+
+// ── TICKETS TAB ──────────────────────────────────────────────
+function renderTickets(){
+  const el = document.getElementById('tab-tickets');
+  const players = activePlayers();
+  let html = '<div class="ticket-grid">';
+  for(const name of players){
+    const t = tickets[name]||{};
+    const hasPicks = Object.keys(t).length > 0;
+    let pts = 0;
+    const hasRes = Object.keys(results).length > 0;
+    FIGHTS.forEach(f=>{
+      const r=results[f.id], p=t[f.id];
+      if(r&&p&&p.winnerIdx===r.winnerIdx){ pts++; if(p.method===r.method) pts++; }
+    });
+    html += `<div class="ticket-card">
+      <div class="ticket-hdr">
+        <span class="tname">🎟 ${name}</span>
+        ${hasRes ? `<span class="score-pill${pts===0?' zero':''}">${pts} bod${pts===1?'':'a'}</span>` : ''}
+      </div>`;
+    if(!hasPicks){
+      html += `<div class="empty-msg">Listić nije popunjen</div>`;
+    } else {
+      FIGHTS.forEach(f=>{
+        const p=t[f.id], r=results[f.id];
+        if(!p){ return; }
+        const p1 = p.winnerIdx===1;
+        let s1='', s2='';
+        if(r){ s1 = r.winnerIdx===1?(p1?'won':'lost'):(p1?'lost':'dim'); s2 = r.winnerIdx===2?(!p1?'won':'lost'):(!p1?'lost':'dim'); }
+        else { s1 = p1?'':'dim'; s2 = p1?'dim':''; }
+        html += `<div class="tfrow">
+          <div class="tf">
+            ${fimg(f.img1, p1?(r?'':'hi'):(r&&r.winnerIdx===1?'hi':'lo'))}
+            <div class="fn ${s1||'dim'}">${f.f1}</div>
+            ${p1?`<span class="mpill ${mc(p.method)}">${p.method}</span>`:''}
+          </div>
+          <div class="tfvs"><div class="tfnum">B${f.num}</div>vs</div>
+          <div class="tf">
+            ${fimg(f.img2, !p1?(r?'':'hi'):(r&&r.winnerIdx===2?'hi':'lo'))}
+            <div class="fn ${s2||'dim'}">${f.f2}</div>
+            ${!p1?`<span class="mpill ${mc(p.method)}">${p.method}</span>`:''}
+          </div>
+        </div>`;
+      });
+    }
+    html += '</div>';
+  }
+  html += '</div>';
+  el.innerHTML = html;
+}
+
+// ── LIVE / MANAGEMENT TAB ────────────────────────────────────
+function renderLive(){
+  const el = document.getElementById('tab-live');
+  if(!isMgr()){
+    el.innerHTML = `<div style="text-align:center;padding:3rem 1rem;color:var(--muted);font-size:.9rem;line-height:2">
+      🔒 Ova sekcija je dostupna samo manageru.<br>
+      Pritisni <strong style="color:var(--text)">⚙ Mgr</strong> u zaglavlju i unesi šifru.
+    </div>`;
+    return;
+  }
+
+  let html = '';
+
+  // ── Section 1: Participants ──
+  html += `<div class="slabel">👥 Kladioničari</div>
+  <div class="p-cards">`;
+  ALL_P.forEach(name => {
+    const on = active[name] !== false;
+    const t = tickets[name]||{};
+    const cnt = Object.keys(t).length;
+    html += `<div class="p-card${on?'':' inactive'}">
+      <div class="p-card-left">
+        <div class="p-avatar${on?'':' off'}">${initial(name)}</div>
+        <div class="p-info">
+          <div class="pname">${name}</div>
+          <div class="pstatus ${on?'on':'off'}">${on?'✓ Aktivan':'✗ Neaktivan'}</div>
+        </div>
+      </div>
+      <div class="p-actions">
+        <button class="btn-edit-ticket" onclick="openEditor('${name}')" ${!on?'disabled':''}>✏️ Listić</button>
+        <button class="toggle-btn ${on?'on':'off'}" onclick="togglePlayer('${name}')" title="${on?'Deaktiviraj':'Aktiviraj'}"></button>
+      </div>
+    </div>`;
+  });
+  html += `</div>`;
+
+  // ── Section 2: Results ──
+  html += `<div class="slabel" style="margin-top:.5rem">🔴 Live rezultati</div>`;
+  FIGHTS.forEach(f=>{
+    const r = results[f.id];
+    const s = resSel[f.id]||{};
+    html += `<div class="fight-card">
+      <div class="fight-card-hdr">
+        <span class="fn">Borba ${f.num}</span>
+        ${r ? `<span class="done-badge">✓ ${r.winnerIdx===1?f.f1:f.f2} · ${r.method}</span>` : '<span class="pending-dot">Na čekanju</span>'}
+      </div>
+      <div class="fphotos">
+        <button class="fpicker${s.winnerIdx===1?' sel':''}" onclick="rSel('${f.id}',1)">
+          ${fimg(f.img1)}
+          <div class="pn">${f.f1}</div>
+        </button>
+        <div class="fvs"><div class="vs-circle">VS</div></div>
+        <button class="fpicker${s.winnerIdx===2?' sel':''}" onclick="rSel('${f.id}',2)">
+          ${fimg(f.img2)}
+          <div class="pn">${f.f2}</div>
+        </button>
+      </div>
+      <div class="method-row">
+        ${METHODS.map(m=>`<button class="mbtn${s.method===m?' '+msel(m):''}" onclick="rMethod('${f.id}','${m}')">${m}</button>`).join('')}
+      </div>
+      <button class="save-btn" onclick="doSaveRes('${f.id}')">💾 Sačuvaj rezultat</button>
+      ${r?`<button class="del-btn" onclick="doDelRes('${f.id}')">✕ Obriši rezultat</button>`:''}
+    </div>`;
+  });
+
+  el.innerHTML = html;
+}
+
+// ── RESULTS TAB ──────────────────────────────────────────────
+function renderResults(){
+  const el = document.getElementById('tab-results');
+  const players = activePlayers();
+  const finished = FIGHTS.filter(f=>results[f.id]);
+  const scores = {};
+  players.forEach(n=>{ scores[n]={w:0,m:0,tot:0}; });
+  finished.forEach(f=>{
+    const r=results[f.id];
+    players.forEach(name=>{
+      const p=(tickets[name]||{})[f.id];
+      if(!p) return;
+      if(p.winnerIdx===r.winnerIdx){ scores[name].w++; scores[name].tot++; if(p.method===r.method){ scores[name].m++; scores[name].tot++; } }
+    });
+  });
+  const sorted = [...players].sort((a,b)=>scores[b].tot-scores[a].tot);
+
+  let html = `<p style="font-size:.7rem;text-transform:uppercase;letter-spacing:.5px;color:var(--muted);margin-bottom:1.1rem">Završeno ${finished.length} od ${FIGHTS.length} borbi</p>`;
+
+  if(finished.length>0 && sorted.length>=3){
+    const [s1,s2,s3] = sorted;
+    html += `<div class="podium">
+      <div class="pod p2"><div class="medal">🥈</div><div class="pname">${s2}</div><div class="pscore">${scores[s2].tot}</div></div>
+      <div class="pod p1"><div class="medal">🥇</div><div class="pname">${s1}</div><div class="pscore">${scores[s1].tot}</div></div>
+      <div class="pod p3"><div class="medal">🥉</div><div class="pname">${s3}</div><div class="pscore">${scores[s3].tot}</div></div>
+    </div>`;
+  }
+
+  html += `<table class="stbl"><thead><tr><th>#</th><th>Igrač</th><th>Pobjednik</th><th>Metod</th><th>Ukupno</th></tr></thead><tbody>`;
+  sorted.forEach((name,i)=>{
+    const s=scores[name];
+    const cls=i===0?'r1':i===1?'r2':i===2?'r3':'';
+    const medal=['🥇','🥈','🥉'][i]||(i+1);
+    html += `<tr class="${cls}"><td>${medal}</td><td>${name}</td><td>${s.w}</td><td>${s.m}</td><td><strong>${s.tot}</strong></td></tr>`;
+  });
+  html += '</tbody></table>';
+
+  if(finished.length>0){
+    html += `<p style="font-size:.7rem;text-transform:uppercase;letter-spacing:.5px;color:var(--muted);margin:.5rem 0 .75rem">Borba po borba</p>
+    <div class="bscroll"><table class="btbl"><thead><tr><th>Borba</th>${players.map(n=>`<th>${n}</th>`).join('')}</tr></thead><tbody>`;
+    finished.forEach(f=>{
+      const r=results[f.id];
+      const w=r.winnerIdx===1?f.f1:f.f2;
+      html += `<tr><td><strong>${w}</strong><br><span style="color:var(--muted);font-size:.62rem">${r.method} · B${f.num}</span></td>`;
+      players.forEach(name=>{
+        const p=(tickets[name]||{})[f.id];
+        if(!p){ html+=`<td style="color:var(--muted)">–</td>`; return; }
+        const wOk=p.winnerIdx===r.winnerIdx, mOk=wOk&&p.method===r.method;
+        const pn=p.winnerIdx===1?f.f1:f.f2;
+        html+=`<td><span class="${wOk?'tick':'cross'}">${wOk?'✓':'✗'}</span> ${pn}<br><small style="color:var(--muted)">${p.method}${mOk?' <span class="tick">+M</span>':''}</small></td>`;
+      });
+      html+='</tr>';
+    });
+    html += '</tbody></table></div>';
+  }
+  el.innerHTML = html;
+}
+
+// ── PARTICIPANT TOGGLE ───────────────────────────────────────
+window.togglePlayer = function(name){
+  const on = active[name] !== false;
+  fbSet(`${DB}/active/${name}`, !on).then(()=>showToast(`${name} ${!on?'aktiviran':'deaktiviran'}`));
+};
+
+// ── TICKET EDITOR ────────────────────────────────────────────
+window.openEditor = function(name){
+  editorFor = name;
+  document.getElementById('editor-name').textContent = `✏️ ${name} — listić`;
+  renderEditor();
+  document.getElementById('editor-overlay').classList.add('open');
+  document.getElementById('editor-overlay').scrollTop = 0;
+};
+window.closeEditor = function(){
+  document.getElementById('editor-overlay').classList.remove('open');
+  editorFor = null;
+};
+
+function renderEditor(){
+  if(!editorFor) return;
+  const t = tickets[editorFor]||{};
+  const filled = Object.values(t).filter(p=>p.winnerIdx&&p.method).length;
+  document.getElementById('editor-sub').textContent = `${filled}/${FIGHTS.length} popunjeno`;
+
+  let html = '';
+  FIGHTS.forEach(f=>{
+    const p = t[f.id]||{};
+    const saved = p.winnerIdx && p.method;
+    html += `<div class="ef-card">
+      <div class="ef-hdr">
+        <span>Borba ${f.num} — ${f.f1} vs ${f.f2}</span>
+        ${saved ? `<span><span class="saved-dot"></span> sačuvano</span>` : '<span style="color:#444">nije odabrano</span>'}
+      </div>
+      <div class="ef-photos">
+        <button class="ef-pick${p.winnerIdx===1?' sel':''}" onclick="ePick('${f.id}',1)">
+          ${fimg(f.img1)}
+          <div class="en">${f.f1}</div>
+        </button>
+        <div class="ef-vs">VS</div>
+        <button class="ef-pick${p.winnerIdx===2?' sel':''}" onclick="ePick('${f.id}',2)">
+          ${fimg(f.img2)}
+          <div class="en">${f.f2}</div>
+        </button>
+      </div>
+      <div class="ef-methods">
+        ${METHODS.map(m=>`<button class="emb${p.method===m?' '+msel(m):''}" onclick="eMethod('${f.id}','${m}')">${m}</button>`).join('')}
+      </div>
+    </div>`;
+  });
+  html += `<button class="editor-done-btn" onclick="closeEditor()">✓ Završi unos</button>`;
+  document.getElementById('editor-body').innerHTML = html;
+}
+
+// local draft for editor (winner selected before method)
+const draft = {};
+
+window.ePick = function(fid, idx){
+  if(!editorFor) return;
+  const existing = (tickets[editorFor]||{})[fid]||{};
+  if(!draft[editorFor]) draft[editorFor]={};
+  draft[editorFor][fid] = {...existing, winnerIdx: idx};
+  // if method already known, save immediately
+  const method = existing.method || (draft[editorFor][fid]||{}).method;
+  if(method){
+    fbSet(`${DB}/tickets/${editorFor}/${fid}`, {winnerIdx:idx, method}).then(()=>{
+      renderEditor(); renderTickets();
+    });
+  } else {
+    // just update local state for visual feedback
+    if(!tickets[editorFor]) tickets[editorFor]={};
+    if(!tickets[editorFor][fid]) tickets[editorFor][fid]={};
+    tickets[editorFor][fid].winnerIdx = idx;
+    renderEditor();
+  }
+};
+
+window.eMethod = function(fid, method){
+  if(!editorFor) return;
+  const existing = (tickets[editorFor]||{})[fid]||{};
+  const winnerIdx = existing.winnerIdx || ((draft[editorFor]||{})[fid]||{}).winnerIdx;
+  if(winnerIdx){
+    fbSet(`${DB}/tickets/${editorFor}/${fid}`, {winnerIdx, method}).then(()=>{
+      renderEditor(); renderTickets();
+    });
+  } else {
+    if(!tickets[editorFor]) tickets[editorFor]={};
+    if(!tickets[editorFor][fid]) tickets[editorFor][fid]={};
+    tickets[editorFor][fid].method = method;
+    renderEditor();
+  }
+};
+
+// ── RESULT ACTIONS ───────────────────────────────────────────
+window.rSel = function(fid, idx){ if(!resSel[fid]) resSel[fid]={}; resSel[fid].winnerIdx=idx; renderLive(); };
+window.rMethod = function(fid, m){ if(!resSel[fid]) resSel[fid]={}; resSel[fid].method=m; renderLive(); };
+window.doSaveRes = function(fid){
+  const s=resSel[fid]||{};
+  if(!s.winnerIdx){ showToast('Odaberi pobjednika!'); return; }
+  if(!s.method){ showToast('Odaberi metod!'); return; }
+  fbSet(`${DB}/results/${fid}`, {winnerIdx:s.winnerIdx, method:s.method}).then(()=>showToast('Rezultat sačuvan ✓'));
+};
+window.doDelRes = function(fid){
+  fbDel(`${DB}/results/${fid}`).then(()=>{ delete resSel[fid]; showToast('Rezultat obrisan'); });
+};
+
+// ── MGR MODAL ────────────────────────────────────────────────
+window.openMgrModal = function(){
+  if(isMgr()){ showToast('Već si prijavljen ✓'); return; }
+  document.getElementById('mgr-modal').classList.add('open');
+  document.getElementById('pin-input').value='';
+  document.getElementById('pin-err').style.display='none';
+  setTimeout(()=>document.getElementById('pin-input').focus(),100);
+};
+window.closeMgrModal = function(){ document.getElementById('mgr-modal').classList.remove('open'); };
+window.checkPin = function(){
+  if(document.getElementById('pin-input').value===PIN){
+    sessionStorage.setItem('mgr', PIN);
+    closeMgrModal();
+    document.getElementById('mgr-chip').classList.add('show');
+    renderAll();
+    showToast('Manager pristup odobren ✓');
+  } else {
+    document.getElementById('pin-err').style.display='block';
+  }
+};
+
+// ── TOAST ────────────────────────────────────────────────────
+function showToast(msg){
+  const t=document.getElementById('toast');
+  t.textContent=msg; t.classList.add('show');
+  setTimeout(()=>t.classList.remove('show'),2500);
+}
+
+// ── SW ───────────────────────────────────────────────────────
+if('serviceWorker' in navigator) navigator.serviceWorker.register('./sw.js').catch(()=>{});
+
+if(isMgr()) document.getElementById('mgr-chip').classList.add('show');
+renderAll();
+</script>
+</body>
+</html>
